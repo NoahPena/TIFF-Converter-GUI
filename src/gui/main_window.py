@@ -2,8 +2,11 @@
 from PIL import Image
 import customtkinter as ctk
 
+from converter import conversions
+
 import os
 import glob
+from pathlib import Path
 
 ctk.set_widget_scaling(1.2)
 ctk.set_window_scaling(1.2)
@@ -86,8 +89,16 @@ class MainWindow(ctk.CTk):
         self.lower_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
         self.lower_frame.grid_columnconfigure(0, weight=1)
 
-        self.convert_button = ctk.CTkButton(self.lower_frame, text="Convert", width=200)
+        self.convert_button = ctk.CTkButton(self.lower_frame, text="Convert", width=200, command=self.convert_files)
         self.convert_button.grid(row=0, column=0, padx=10, pady=10, sticky="ns")
+
+        self.output_log_textbox = ctk.CTkTextbox(self.lower_frame, width=1000, height=200)
+        self.output_log_textbox.configure(state="disabled")
+        self.output_log_textbox.grid(row=1, column=0, padx=10, pady=10)
+
+        self.output_progress_bar = ctk.CTkProgressBar(self.lower_frame, width=1000)
+        self.output_progress_bar.set(0)
+        self.output_progress_bar.grid(row=2, column=0, padx=10, pady=10)
 
     def input_file_picker(self):
         filenames = ctk.filedialog.askopenfilenames(title="Select files", filetypes=[("TIFF files", "*.tiff *.tif"), ("All files", "*.*")])
@@ -102,12 +113,28 @@ class MainWindow(ctk.CTk):
 
     def input_directory_picker(self):
         directory = ctk.filedialog.askdirectory(title="Select directory")
-        search_pattern = os.path.join(directory, '**', '*.tiff')
-        tiff_files = glob.glob(search_pattern, recursive=self.do_recursive_checkbox.get())
+        
+        tiff_files = []
+
+        for filetype in ['*.tiff', '*.tif']:
+            if self.do_recursive_checkbox.get():
+                p = Path(directory)
+
+                for filepath in p.rglob(filetype):
+                    tiff_files.append(str(filepath))
+            else:
+                search_pattern = os.path.join(directory, filetype)
+                tiff_files += glob.glob(search_pattern, recursive=self.do_recursive_checkbox.get())
+
+        self.input_files_textbox.configure(state="normal")
+        self.input_files_textbox.delete("0.0", "end")
+        self.input_files_textbox.configure(state="disabled")
+
         for file in tiff_files:
             self.input_files_textbox.configure(state="normal")
             self.input_files_textbox.insert("end", f"{file}\n")
             self.input_files_textbox.configure(state="disabled")
+        print(f"Found {len(tiff_files)} TIFF files in directory.")
         print(f"Selected directory: {directory}")
 
     def recursive_directory_disabler(self):
@@ -123,3 +150,30 @@ class MainWindow(ctk.CTk):
         self.output_directory_textbox.insert("end", f"{directory}\n")
         self.output_directory_textbox.configure(state="disabled")
         print(f"Selected directory: {directory}")
+
+    def convert_files(self):
+        
+        input_files = self.input_files_textbox.get("0.0", "end").strip().split("\n")
+        output_directory = self.output_directory_textbox.get("0.0", "end").strip()
+        output_format = self.file_type_picker.get()
+        recreate_structure = self.recreate_folder_structure_checkbox.get()
+        recreate_base = ""
+
+        if recreate_structure:
+            first_file_path = input_files[0]
+            recreate_base = os.path.dirname(first_file_path)
+
+        self.output_progress_bar.set(0)
+        self.output_log_textbox.configure(state="normal")
+        self.output_log_textbox.delete("0.0", "end")
+        self.output_log_textbox.configure(state="disabled")
+
+        conversions.convert_tiff_images(
+            input_files=input_files,
+            output_format=output_format,
+            output_directory=output_directory,
+            progress_bar=self.output_progress_bar,
+            output_text_box=self.output_log_textbox,
+            recreate_directory_structure=recreate_structure,
+            recreate_directory_base=recreate_base
+        )
