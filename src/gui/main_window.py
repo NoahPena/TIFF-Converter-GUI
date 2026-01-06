@@ -59,7 +59,7 @@ class MainWindow(ctk.CTk):
         self.file_type_picker_label = ctk.CTkLabel(self.conversion_frame, text="Convert To:")
         self.file_type_picker_label.grid(row=0, column=0, padx=10, pady=10)
 
-        self.arrow_image = ctk.CTkImage(light_image=Image.open("assets/arrow.png"), dark_image=None, size=(100, 100))
+        self.arrow_image = ctk.CTkImage(light_image=Image.open(Path("assets/arrow.png")), dark_image=None, size=(100, 100))
         self.arrow_label = ctk.CTkLabel(self.conversion_frame, image=self.arrow_image, text="")
         self.arrow_label.grid(row=1, column=0, padx=10, pady=10)
 

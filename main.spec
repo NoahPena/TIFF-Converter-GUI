@@ -5,7 +5,7 @@ a = Analysis(
     ['src/main.py'],
     pathex=['.'],
     binaries=[],
-    datas=[('src/gui', 'gui'), ('src/converter', 'converter'), ('venv/lib/python3.10/site-packages/PIL', 'PIL')],
+    datas=[('src/gui', 'gui'), ('src/converter', 'converter'), ('venv/lib/python3.10/site-packages/PIL', 'PIL'), ('assets/arrow.png', '.')],
     #hiddenimports=['future'],
     hiddenimports=['PIL', 'Pillow', 'PIL._imagingtk', 'PIL._tkinter_finder', 'tempfile', 'customtkinter', 'glob'],
     hookspath=[],
